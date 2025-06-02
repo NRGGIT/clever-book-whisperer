@@ -96,6 +96,7 @@ const Index = () => {
                   key={book.id}
                   book={book}
                   onDelete={() => deleteBook(book.id)}
+                  onRead={() => window.location.href = `/reader/${book.id}`}
                 />
               ))}
             </div>

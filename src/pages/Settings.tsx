@@ -2,24 +2,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiService } from '@/services/api';
-import { AppConfig } from '@/types';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
 import { ArrowLeft, Save, Settings as SettingsIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+interface ConfigResponse {
+  apiEndpoint: string;
+  apiKey: string;
+  modelName: string;
+  prompt: string;
+  defaultRatio: number;
+}
 
 const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [config, setConfig] = useState<AppConfig>({
-    model: 'gpt-4o-mini',
-    temperature: 0.7,
-    maxTokens: 4000,
+  const [config, setConfig] = useState<ConfigResponse>({
+    apiEndpoint: 'https://api.openai.com/v1',
+    apiKey: '',
+    modelName: 'gpt-4o-mini',
+    prompt: 'You are a helpful assistant that creates concise, accurate summaries of text content. Maintain the key information and main ideas while reducing the length according to the specified ratio. Keep the summary coherent and well-structured.',
+    defaultRatio: 0.3,
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -123,64 +131,74 @@ const Settings = () => {
                 id="apiKey"
                 type="password"
                 placeholder="sk-..."
-                value={config.openaiApiKey || ''}
-                onChange={(e) => setConfig(prev => ({ ...prev, openaiApiKey: e.target.value }))}
+                value={config.apiKey || ''}
+                onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
               />
               <p className="text-sm text-gray-500">
                 Your API key is stored securely and used only for summarization requests
               </p>
             </div>
 
+            {/* API Endpoint */}
+            <div className="space-y-2">
+              <Label htmlFor="apiEndpoint">API Endpoint</Label>
+              <Input
+                id="apiEndpoint"
+                type="text"
+                placeholder="https://api.openai.com/v1"
+                value={config.apiEndpoint || ''}
+                onChange={(e) => setConfig(prev => ({ ...prev, apiEndpoint: e.target.value }))}
+              />
+              <p className="text-sm text-gray-500">
+                OpenAI API endpoint URL
+              </p>
+            </div>
+
             {/* Model Selection */}
             <div className="space-y-2">
               <Label htmlFor="model">AI Model</Label>
-              <Select value={config.model} onValueChange={(value) => setConfig(prev => ({ ...prev, model: value }))}>
+              <Select value={config.modelName} onValueChange={(value) => setConfig(prev => ({ ...prev, modelName: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="gpt-4o-mini">GPT-4O Mini (Fast & Economical)</SelectItem>
                   <SelectItem value="gpt-4o">GPT-4O (Powerful)</SelectItem>
-                  <SelectItem value="gpt-4.5-preview">GPT-4.5 Preview (Most Advanced)</SelectItem>
+                  <SelectItem value="gpt-4">GPT-4 (Legacy)</SelectItem>
+                  <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (Economic)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Temperature */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="temperature">Temperature</Label>
-                <span className="text-sm text-gray-500">{config.temperature}</span>
-              </div>
-              <Slider
-                value={[config.temperature]}
-                onValueChange={(value) => setConfig(prev => ({ ...prev, temperature: value[0] }))}
-                min={0}
-                max={1}
-                step={0.1}
-                className="w-full"
+            {/* Default Ratio */}
+            <div className="space-y-2">
+              <Label htmlFor="defaultRatio">Default Summarization Ratio</Label>
+              <Input
+                id="defaultRatio"
+                type="number"
+                min="0.1"
+                max="0.8"
+                step="0.1"
+                value={config.defaultRatio}
+                onChange={(e) => setConfig(prev => ({ ...prev, defaultRatio: parseFloat(e.target.value) }))}
               />
               <p className="text-sm text-gray-500">
-                Controls creativity. Lower values are more focused, higher values are more creative.
+                Default compression ratio for summaries (0.1 = very short, 0.8 = detailed)
               </p>
             </div>
 
-            {/* Max Tokens */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="maxTokens">Max Tokens</Label>
-                <span className="text-sm text-gray-500">{config.maxTokens}</span>
-              </div>
-              <Slider
-                value={[config.maxTokens]}
-                onValueChange={(value) => setConfig(prev => ({ ...prev, maxTokens: value[0] }))}
-                min={1000}
-                max={8000}
-                step={500}
-                className="w-full"
+            {/* System Prompt */}
+            <div className="space-y-2">
+              <Label htmlFor="prompt">System Prompt</Label>
+              <textarea
+                id="prompt"
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Enter the system prompt for AI summarization..."
+                value={config.prompt || ''}
+                onChange={(e) => setConfig(prev => ({ ...prev, prompt: e.target.value }))}
               />
               <p className="text-sm text-gray-500">
-                Maximum length of generated summaries
+                Instructions for the AI on how to generate summaries
               </p>
             </div>
 

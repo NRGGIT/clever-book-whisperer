@@ -5,8 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, BookOpen, Loader2, BarChart3 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Sparkles, BookOpen, Loader2, BarChart3, ChevronDown, Settings } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,7 +27,9 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [compressionRatio, setCompressionRatio] = useState(0.3);
   const [language, setLanguage] = useState('English');
+  const [customPrompt, setCustomPrompt] = useState('');
   const [summaryStats, setSummaryStats] = useState<any>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { toast } = useToast();
 
   const generateSummary = async () => {
@@ -32,7 +38,8 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
       const response = await ApiService.summarizeContent({
         content,
         ratio: compressionRatio,
-        language: language.toLowerCase()
+        language: language.toLowerCase(),
+        customPrompt: customPrompt || undefined
       });
       setSummary(response.summary);
       setSummaryStats(response);
@@ -45,7 +52,7 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
       console.error('Failed to generate summary:', error);
       toast({
         title: "Summary Failed",
-        description: "Could not generate summary. Please try again.",
+        description: "Could not generate summary. Please check your configuration.",
         variant: "destructive",
       });
     } finally {
@@ -54,16 +61,18 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
   };
 
   const renderMarkdown = (text: string) => {
-    // Simple markdown parsing for basic formatting
+    // Enhanced markdown parsing for better formatting
     return text
       .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">$1</h3>')
       .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">$1</h2>')
       .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 mt-8 mb-4">$1</h1>')
       .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
       .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-      .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc">$1</li>')
+      .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc mb-1">$1</li>')
+      .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal mb-1">$1</li>')
       .replace(/\n\n/g, '</p><p class="mb-4">')
-      .replace(/^(.*)$/gm, '<p class="mb-4">$1</p>');
+      .replace(/^(.*)$/gm, '<p class="mb-4">$1</p>')
+      .replace(/<p class="mb-4"><\/p>/g, '');
   };
 
   if (loading) {
@@ -97,78 +106,112 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                     {Math.round(summaryStats.actualRatio * 100)}% compressed
                   </Badge>
                 )}
+                {summaryStats && (
+                  <Badge variant="outline" className="text-xs">
+                    {summaryStats.originalTokens} → {summaryStats.summaryTokens} tokens
+                  </Badge>
+                )}
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === 'full' ? 'default' : 'outline'}
-                onClick={() => setViewMode('full')}
-                size="sm"
-              >
-                <BookOpen className="w-4 h-4 mr-2" />
-                Full Text
-              </Button>
-              <Button
-                variant={viewMode === 'summary' ? 'default' : 'outline'}
-                onClick={() => setViewMode('summary')}
-                size="sm"
-                disabled={!summary}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                AI Summary
-              </Button>
-            </div>
+            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'full' | 'summary')}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="full" className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  Full Text
+                </TabsTrigger>
+                <TabsTrigger value="summary" className="flex items-center gap-2" disabled={!summary}>
+                  <Sparkles className="w-4 h-4" />
+                  AI Summary
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </div>
       </div>
 
-      {/* AI Controls */}
+      {/* AI Summarization Controls */}
       {viewMode === 'summary' && (
         <Card className="m-6 mb-0">
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Compression Ratio: {Math.round(compressionRatio * 100)}%
-                </label>
-                <Slider
-                  value={[compressionRatio]}
-                  onValueChange={(value) => setCompressionRatio(value[0])}
-                  min={0.1}
-                  max={0.8}
-                  step={0.1}
-                  className="w-full"
-                />
+            <div className="space-y-4">
+              {/* Basic Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Compression Ratio: {Math.round(compressionRatio * 100)}%
+                  </Label>
+                  <Slider
+                    value={[compressionRatio]}
+                    onValueChange={(value) => setCompressionRatio(value[0])}
+                    min={0.1}
+                    max={0.8}
+                    step={0.1}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Language
+                  </Label>
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="English">English</SelectItem>
+                      <SelectItem value="Russian">Russian</SelectItem>
+                      <SelectItem value="Spanish">Spanish</SelectItem>
+                      <SelectItem value="French">French</SelectItem>
+                      <SelectItem value="German">German</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Button 
+                  onClick={generateSummary}
+                  disabled={summaryLoading}
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                >
+                  {summaryLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-2" />
+                  )}
+                  Generate Summary
+                </Button>
               </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Language
-                </label>
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Russian">Russian</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Button 
-                onClick={generateSummary}
-                disabled={summaryLoading}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              >
-                {summaryLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
-                )}
-                Generate Summary
-              </Button>
+
+              {/* Advanced Options */}
+              <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between">
+                    <span className="flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      Advanced Options
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-4">
+                  <div>
+                    <Label htmlFor="customPrompt" className="text-sm font-medium text-gray-700 mb-2 block">
+                      Custom Prompt (Optional)
+                    </Label>
+                    <Textarea
+                      id="customPrompt"
+                      placeholder="e.g., Focus on key themes and character development..."
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      className="min-h-[80px]"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Add specific instructions for the AI summarization
+                    </p>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </CardContent>
         </Card>
@@ -200,6 +243,24 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                 }}
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(summary) }}
               />
+              
+              {/* Summary Statistics */}
+              {summaryStats && (
+                <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <h4 className="font-semibold text-amber-800 mb-2">Summary Statistics</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-amber-700">
+                    <div>
+                      <span className="font-medium">Original:</span> {summaryStats.originalTokens} tokens
+                    </div>
+                    <div>
+                      <span className="font-medium">Summary:</span> {summaryStats.summaryTokens} tokens
+                    </div>
+                    <div>
+                      <span className="font-medium">Compression:</span> {Math.round(summaryStats.actualRatio * 100)}%
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-12">

@@ -43,7 +43,6 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
       });
       setSummary(response.summary);
       setSummaryStats(response);
-      setViewMode('summary');
       toast({
         title: "Summary Generated",
         description: `Compressed to ${Math.round(response.actualRatio * 100)}% of original length`,
@@ -120,7 +119,7 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                   <BookOpen className="w-4 h-4" />
                   Full Text
                 </TabsTrigger>
-                <TabsTrigger value="summary" className="flex items-center gap-2" disabled={!summary}>
+                <TabsTrigger value="summary" className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
                   AI Summary
                 </TabsTrigger>
@@ -130,158 +129,157 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
         </div>
       </div>
 
-      {/* AI Summarization Controls */}
-      {viewMode === 'summary' && (
-        <Card className="m-6 mb-0">
-          <CardContent className="p-4">
-            <div className="space-y-4">
-              {/* Basic Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Compression Ratio: {Math.round(compressionRatio * 100)}%
-                  </Label>
-                  <Slider
-                    value={[compressionRatio]}
-                    onValueChange={(value) => setCompressionRatio(value[0])}
-                    min={0.1}
-                    max={0.8}
-                    step={0.1}
-                    className="w-full"
-                  />
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Language
-                  </Label>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="English">English</SelectItem>
-                      <SelectItem value="Russian">Russian</SelectItem>
-                      <SelectItem value="Spanish">Spanish</SelectItem>
-                      <SelectItem value="French">French</SelectItem>
-                      <SelectItem value="German">German</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Button 
-                  onClick={generateSummary}
-                  disabled={summaryLoading}
-                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                >
-                  {summaryLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mr-2" />
-                  )}
-                  Generate Summary
-                </Button>
-              </div>
-
-              {/* Advanced Options */}
-              <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full justify-between">
-                    <span className="flex items-center gap-2">
-                      <Settings className="w-4 h-4" />
-                      Advanced Options
-                    </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-4">
-                  <div>
-                    <Label htmlFor="customPrompt" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Custom Prompt (Optional)
-                    </Label>
-                    <Textarea
-                      id="customPrompt"
-                      placeholder="e.g., Focus on key themes and character development..."
-                      value={customPrompt}
-                      onChange={(e) => setCustomPrompt(e.target.value)}
-                      className="min-h-[80px]"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Add specific instructions for the AI summarization
-                    </p>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        <div className="max-w-4xl mx-auto p-6">
-          {viewMode === 'full' ? (
-            <div className="prose prose-lg max-w-none">
-              <div 
-                className="text-gray-800 leading-relaxed"
-                style={{ 
-                  fontFamily: 'Crimson Pro, Georgia, serif',
-                  fontSize: '18px',
-                  lineHeight: '1.7'
-                }}
-                dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }}
-              />
+        <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'full' | 'summary')}>
+          <TabsContent value="full" className="mt-0">
+            <div className="max-w-4xl mx-auto p-6">
+              <div className="prose prose-lg max-w-none">
+                <div 
+                  className="text-gray-800 leading-relaxed"
+                  style={{ 
+                    fontFamily: 'Crimson Pro, Georgia, serif',
+                    fontSize: '18px',
+                    lineHeight: '1.7'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }}
+                />
+              </div>
             </div>
-          ) : summary ? (
-            <div className="prose prose-lg max-w-none">
-              <div 
-                className="text-gray-800 leading-relaxed"
-                style={{ 
-                  fontFamily: 'Crimson Pro, Georgia, serif',
-                  fontSize: '18px',
-                  lineHeight: '1.7'
-                }}
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(summary) }}
-              />
-              
-              {/* Summary Statistics */}
-              {summaryStats && (
-                <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <h4 className="font-semibold text-amber-800 mb-2">Summary Statistics</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-amber-700">
+          </TabsContent>
+
+          <TabsContent value="summary" className="mt-0">
+            {/* AI Summarization Controls */}
+            <Card className="m-6 mb-0">
+              <CardContent className="p-4">
+                <div className="space-y-4">
+                  {/* Basic Controls */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <div>
-                      <span className="font-medium">Original:</span> {summaryStats.originalTokens} tokens
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Compression Ratio: {Math.round(compressionRatio * 100)}%
+                      </Label>
+                      <Slider
+                        value={[compressionRatio]}
+                        onValueChange={(value) => setCompressionRatio(value[0])}
+                        min={0.1}
+                        max={0.8}
+                        step={0.1}
+                        className="w-full"
+                      />
                     </div>
+                    
                     <div>
-                      <span className="font-medium">Summary:</span> {summaryStats.summaryTokens} tokens
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Language
+                      </Label>
+                      <Select value={language} onValueChange={setLanguage}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="English">English</SelectItem>
+                          <SelectItem value="Russian">Russian</SelectItem>
+                          <SelectItem value="Spanish">Spanish</SelectItem>
+                          <SelectItem value="French">French</SelectItem>
+                          <SelectItem value="German">German</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <span className="font-medium">Compression:</span> {Math.round(summaryStats.actualRatio * 100)}%
-                    </div>
+                    
+                    <Button 
+                      onClick={generateSummary}
+                      disabled={summaryLoading}
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                    >
+                      {summaryLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-4 h-4 mr-2" />
+                      )}
+                      Generate Summary
+                    </Button>
                   </div>
+
+                  {/* Advanced Options */}
+                  <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="w-full justify-between">
+                        <span className="flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          Advanced Options
+                        </span>
+                        <ChevronDown className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-4 pt-4">
+                      <div>
+                        <Label htmlFor="customPrompt" className="text-sm font-medium text-gray-700 mb-2 block">
+                          Custom Prompt (Optional)
+                        </Label>
+                        <Textarea
+                          id="customPrompt"
+                          placeholder="e.g., Focus on key themes and character development..."
+                          value={customPrompt}
+                          onChange={(e) => setCustomPrompt(e.target.value)}
+                          className="min-h-[80px]"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Add specific instructions for the AI summarization
+                        </p>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Summary Content */}
+            <div className="max-w-4xl mx-auto p-6">
+              {summary ? (
+                <div className="prose prose-lg max-w-none">
+                  <div 
+                    className="text-gray-800 leading-relaxed"
+                    style={{ 
+                      fontFamily: 'Crimson Pro, Georgia, serif',
+                      fontSize: '18px',
+                      lineHeight: '1.7'
+                    }}
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(summary) }}
+                  />
+                  
+                  {/* Summary Statistics */}
+                  {summaryStats && (
+                    <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                      <h4 className="font-semibold text-amber-800 mb-2">Summary Statistics</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-amber-700">
+                        <div>
+                          <span className="font-medium">Original:</span> {summaryStats.originalTokens} tokens
+                        </div>
+                        <div>
+                          <span className="font-medium">Summary:</span> {summaryStats.summaryTokens} tokens
+                        </div>
+                        <div>
+                          <span className="font-medium">Compression:</span> {Math.round(summaryStats.actualRatio * 100)}%
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No Summary Generated
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Adjust the settings above and click "Generate Summary" to create an AI-powered summary of this chapter
+                  </p>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No Summary Generated
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Generate an AI summary to see a condensed version of this chapter
-              </p>
-              <Button 
-                onClick={generateSummary}
-                disabled={summaryLoading}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Generate Summary
-              </Button>
-            </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

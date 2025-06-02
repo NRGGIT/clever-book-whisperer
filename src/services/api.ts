@@ -1,5 +1,4 @@
-
-const API_BASE_URL = 'https://d4507e003c454f5ea575fedfd30f2173.constructor.pro/api';
+const API_BASE_URL = 'https://4256a33f4130474d891d1270c5d7a0c1.constructor.pro/api';
 
 export class ApiService {
   static async uploadEpub(file: File): Promise<any> {

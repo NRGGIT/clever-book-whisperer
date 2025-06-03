@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Sparkles, BookOpen, Loader2, BarChart3, ChevronDown, Settings } from 'lucide-react';
+import { Mermaid } from '@/components/ui/mermaid';
 import { ApiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { useChapterSummaries } from '@/hooks/useChapterSummaries';
@@ -73,17 +74,46 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
   };
 
   const renderMarkdown = (text: string) => {
-    return text
-      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-3">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4">$1</h1>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-      .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc mb-1">$1</li>')
-      .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal mb-1">$1</li>')
-      .replace(/\n\n/g, '</p><p class="mb-4">')
-      .replace(/^(.*)$/gm, '<p class="mb-4">$1</p>')
-      .replace(/<p class="mb-4"><\/p>/g, '');
+    // Split text by mermaid code blocks
+    const parts = text.split(/(```mermaid[\s\S]*?```)/g);
+    
+    return parts.map((part, index) => {
+      // Check if this part is a mermaid diagram
+      if (part.startsWith('```mermaid') && part.endsWith('```')) {
+        const mermaidCode = part.replace(/```mermaid\n?/, '').replace(/\n?```$/, '');
+        return (
+          <Mermaid
+            key={`mermaid-${index}`}
+            chart={mermaidCode}
+            id={`diagram-${chapter.id}-${index}`}
+          />
+        );
+      }
+      
+      // Regular markdown processing for non-mermaid parts
+      if (part.trim()) {
+        const processed = part
+          .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-3">$1</h3>')
+          .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4">$1</h2>')
+          .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4">$1</h1>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+          .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc mb-1">$1</li>')
+          .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal mb-1">$1</li>')
+          .replace(/\n\n/g, '</p><p class="mb-4">')
+          .replace(/^(.*)$/gm, '<p class="mb-4">$1</p>')
+          .replace(/<p class="mb-4"><\/p>/g, '');
+        
+        return (
+          <div
+            key={`text-${index}`}
+            dangerouslySetInnerHTML={{ __html: processed }}
+          />
+        );
+      }
+      
+      return null;
+    }).filter(Boolean);
   };
 
   if (loading) {
@@ -236,13 +266,13 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
                         </Label>
                         <Textarea
                           id="customPrompt"
-                          placeholder="e.g., Focus on key themes and character development..."
+                          placeholder="e.g., Focus on key themes and character development, include diagrams where helpful..."
                           value={customPrompt}
                           onChange={(e) => setCustomPrompt(e.target.value)}
                           className="min-h-[60px] sm:min-h-[80px] text-sm"
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Add specific instructions for the AI summarization
+                          Add specific instructions for the AI summarization. You can request Mermaid diagrams for visual representation.
                         </p>
                       </div>
                     </CollapsibleContent>
@@ -262,8 +292,9 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
                       fontSize: window.innerWidth < 640 ? '16px' : '18px',
                       lineHeight: '1.7'
                     }}
-                    dangerouslySetInnerHTML={{ __html: renderMarkdown(summary) }}
-                  />
+                  >
+                    {renderMarkdown(summary)}
+                  </div>
                   
                   {/* Summary Statistics */}
                   {summaryStats && (
@@ -290,7 +321,7 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
                     No Summary Generated
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm px-4">
-                    Adjust the settings above and click "Generate Summary" to create an AI-powered summary of this chapter
+                    Adjust the settings above and click "Generate Summary" to create an AI-powered summary of this chapter. You can request diagrams in your custom prompt!
                   </p>
                 </div>
               )}

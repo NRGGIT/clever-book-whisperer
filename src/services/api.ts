@@ -1,4 +1,19 @@
-const API_BASE_URL = 'https://4256a33f4130474d891d1270c5d7a0c1.constructor.pro/api';
+const getApiBaseUrl = (): string => {
+  // First try Vite environment variable (build time)
+  if ((import.meta as any).env?.VITE_API_BASE_URL) {
+    return (import.meta as any).env.VITE_API_BASE_URL;
+  }
+  
+  // Then try runtime configuration (Docker)
+  if (typeof window !== 'undefined' && (window as any).ENV?.VITE_API_BASE_URL) {
+    return (window as any).ENV.VITE_API_BASE_URL;
+  }
+  
+  // Fallback to default
+  return 'http://localhost:3000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface OpenAIModel {
   id: string;

@@ -1,73 +1,105 @@
-# Welcome to your Lovable project
+# EpubAI Frontend
 
-## Project info
+Smart EPUB Reader frontend built with React, TypeScript, and Vite.
 
-**URL**: https://lovable.dev/projects/df20307b-ad3a-4263-9d39-557a13537746
+## Features
 
-## How can I edit this code?
+- Upload and read EPUB books
+- AI-powered chapter summaries
+- Modern, responsive UI with ShadCN components
+- Configurable AI models and settings
 
-There are several ways of editing your application.
+## Development
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/df20307b-ad3a-4263-9d39-557a13537746) and start prompting.
+- Node.js 18 or higher
+- npm or yarn
 
-Changes made via Lovable will be committed automatically to this repo.
+### Setup
 
-**Use your preferred IDE**
+1. Install dependencies:
+```bash
+npm install
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. Create environment file:
+```bash
+cp .env.example .env
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. Update the `.env` file with your backend API URL:
+```
+VITE_API_BASE_URL=http://localhost:3000/api
+```
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. Start development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Docker
 
-**Use GitHub Codespaces**
+### Building the Docker Image
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+docker build -t epubai-frontend .
+```
 
-## What technologies are used for this project?
+### Running with Docker
 
-This project is built with:
+```bash
+docker run -d \
+  --name epubai-frontend \
+  -p 80:80 \
+  -e VITE_API_BASE_URL=http://your-backend-api:3000/api \
+  epubai-frontend
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Environment Variables
 
-## How can I deploy this project?
+- `VITE_API_BASE_URL`: Backend API URL (default: `http://localhost:3000/api`)
 
-Simply open [Lovable](https://lovable.dev/projects/df20307b-ad3a-4263-9d39-557a13537746) and click on Share -> Publish.
+### Docker Compose Example
 
-## Can I connect a custom domain to my Lovable project?
+```yaml
+version: '3.8'
+services:
+  frontend:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_BASE_URL=http://backend:3000/api
+    depends_on:
+      - backend
+```
 
-Yes, you can!
+## Production Build
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+npm run build
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The built files will be in the `dist` directory.
+
+## Architecture
+
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **UI Components**: ShadCN/UI with Radix UI primitives
+- **Styling**: Tailwind CSS
+- **State Management**: React hooks and context
+- **HTTP Client**: Fetch API
+- **Routing**: React Router
+
+## Configuration
+
+The application supports both build-time and runtime configuration:
+
+1. **Build-time**: Set `VITE_API_BASE_URL` environment variable during build
+2. **Runtime**: Set `VITE_API_BASE_URL` environment variable when running the Docker container
+
+The runtime configuration takes precedence and allows for flexible deployment without rebuilding the image.

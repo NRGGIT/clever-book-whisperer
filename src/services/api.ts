@@ -1,5 +1,26 @@
 const API_BASE_URL = 'https://4256a33f4130474d891d1270c5d7a0c1.constructor.pro/api';
 
+interface OpenAIModel {
+  id: string;
+  object: string;
+  created: number;
+  owned_by: string;
+  permission: any[];
+  root: string;
+  parent: string | null;
+  metadata: {
+    name: string;
+    description: string;
+    original_id: string;
+    code: string;
+  };
+}
+
+interface OpenAIModelsResponse {
+  object: string;
+  data: OpenAIModel[];
+}
+
 export class ApiService {
   static async uploadEpub(file: File): Promise<any> {
     const formData = new FormData();
@@ -97,5 +118,34 @@ export class ApiService {
     }
     
     return response.json();
+  }
+  
+  static async getAvailableModels(): Promise<OpenAIModel[]> {
+    try {
+      const config = await this.getConfig();
+      const response = await fetch(`${config.apiEndpoint}/v1/models`, {
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch models: ${response.statusText}`);
+      }
+      
+      const data: OpenAIModelsResponse = await response.json();
+      
+      // Sort by code and original_id as requested
+      return data.data.sort((a, b) => {
+        if (a.metadata.code !== b.metadata.code) {
+          return a.metadata.code.localeCompare(b.metadata.code);
+        }
+        return a.metadata.original_id.localeCompare(b.metadata.original_id);
+      });
+    } catch (error) {
+      console.error('Failed to fetch OpenAI models:', error);
+      throw error;
+    }
   }
 }

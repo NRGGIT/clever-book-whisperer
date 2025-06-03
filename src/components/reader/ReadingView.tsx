@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Sparkles, BookOpen, Loader2, BarChart3, ChevronDown, Settings } from 'lucide-react';
 import { ApiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { useChapterSummaries } from '@/hooks/useChapterSummaries';
 
 interface ReadingViewProps {
   chapter: Chapter;
@@ -31,6 +32,7 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
   const [summaryStats, setSummaryStats] = useState<any>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { toast } = useToast();
+  const { markChapterSummary } = useChapterSummaries();
 
   const generateSummary = async () => {
     try {
@@ -43,6 +45,7 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
       });
       setSummary(response.summary);
       setSummaryStats(response);
+      markChapterSummary(chapter.id);
       toast({
         title: "Summary Generated",
         description: `Compressed to ${Math.round(response.actualRatio * 100)}% of original length`,
@@ -62,9 +65,9 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
   const renderMarkdown = (text: string) => {
     // Enhanced markdown parsing for better formatting
     return text
-      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-900 mt-8 mb-4">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 mt-8 mb-4">$1</h1>')
+      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-3">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4">$1</h1>')
       .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
       .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
       .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc mb-1">$1</li>')
@@ -79,7 +82,7 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 text-amber-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading chapter...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading chapter...</p>
         </div>
       </div>
     );
@@ -87,41 +90,43 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
 
   return (
     <div className="flex-1 flex flex-col h-full">
-      {/* Header */}
-      <div className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header - Mobile optimized */}
+      <div className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="p-3 sm:p-6">
+          <div className="flex flex-col gap-3">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1 leading-tight">
                 {chapter.title}
               </h1>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <Badge variant="outline" className="text-xs">
                   Chapter {chapter.order}
                 </Badge>
                 {summaryStats && (
-                  <Badge variant="secondary" className="text-xs">
-                    <BarChart3 className="w-3 h-3 mr-1" />
-                    {Math.round(summaryStats.actualRatio * 100)}% compressed
-                  </Badge>
-                )}
-                {summaryStats && (
-                  <Badge variant="outline" className="text-xs">
-                    {summaryStats.originalTokens} → {summaryStats.summaryTokens} tokens
-                  </Badge>
+                  <>
+                    <Badge variant="secondary" className="text-xs">
+                      <BarChart3 className="w-3 h-3 mr-1" />
+                      {Math.round(summaryStats.actualRatio * 100)}% compressed
+                    </Badge>
+                    <Badge variant="outline" className="text-xs hidden sm:inline-flex">
+                      {summaryStats.originalTokens} → {summaryStats.summaryTokens} tokens
+                    </Badge>
+                  </>
                 )}
               </div>
             </div>
             
             <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'full' | 'summary')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="full" className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  Full Text
+              <TabsList className="grid w-full grid-cols-2 h-8 sm:h-10">
+                <TabsTrigger value="full" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Full Text</span>
+                  <span className="sm:hidden">Text</span>
                 </TabsTrigger>
-                <TabsTrigger value="summary" className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  AI Summary
+                <TabsTrigger value="summary" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">AI Summary</span>
+                  <span className="sm:hidden">Summary</span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -133,13 +138,13 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
       <div className="flex-1 overflow-auto">
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'full' | 'summary')}>
           <TabsContent value="full" className="mt-0">
-            <div className="max-w-4xl mx-auto p-6">
-              <div className="prose prose-lg max-w-none">
+            <div className="max-w-4xl mx-auto p-3 sm:p-6">
+              <div className="prose prose-sm sm:prose-lg max-w-none">
                 <div 
-                  className="text-gray-800 leading-relaxed"
+                  className="text-gray-800 dark:text-gray-200 leading-relaxed"
                   style={{ 
                     fontFamily: 'Crimson Pro, Georgia, serif',
-                    fontSize: '18px',
+                    fontSize: window.innerWidth < 640 ? '16px' : '18px',
                     lineHeight: '1.7'
                   }}
                   dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }}
@@ -149,15 +154,15 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
           </TabsContent>
 
           <TabsContent value="summary" className="mt-0">
-            {/* AI Summarization Controls */}
-            <Card className="m-6 mb-0">
-              <CardContent className="p-4">
+            {/* AI Summarization Controls - Mobile optimized */}
+            <Card className="m-3 sm:m-6 mb-0">
+              <CardContent className="p-3 sm:p-4">
                 <div className="space-y-4">
                   {/* Basic Controls */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        Compression Ratio: {Math.round(compressionRatio * 100)}%
+                      <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                        Compression: {Math.round(compressionRatio * 100)}%
                       </Label>
                       <Slider
                         value={[compressionRatio]}
@@ -170,11 +175,11 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                     </div>
                     
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                      <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                         Language
                       </Label>
                       <Select value={language} onValueChange={setLanguage}>
-                        <SelectTrigger>
+                        <SelectTrigger className="text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -187,24 +192,27 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                       </Select>
                     </div>
                     
-                    <Button 
-                      onClick={generateSummary}
-                      disabled={summaryLoading}
-                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                    >
-                      {summaryLoading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4 h-4 mr-2" />
-                      )}
-                      Generate Summary
-                    </Button>
+                    <div className="sm:col-span-2 lg:col-span-1">
+                      <Button 
+                        onClick={generateSummary}
+                        disabled={summaryLoading}
+                        className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-sm"
+                        size="sm"
+                      >
+                        {summaryLoading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Sparkles className="w-4 h-4 mr-2" />
+                        )}
+                        Generate Summary
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Advanced Options */}
                   <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
                     <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="w-full justify-between">
+                      <Button variant="ghost" size="sm" className="w-full justify-between text-sm">
                         <span className="flex items-center gap-2">
                           <Settings className="w-4 h-4" />
                           Advanced Options
@@ -214,7 +222,7 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-4 pt-4">
                       <div>
-                        <Label htmlFor="customPrompt" className="text-sm font-medium text-gray-700 mb-2 block">
+                        <Label htmlFor="customPrompt" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                           Custom Prompt (Optional)
                         </Label>
                         <Textarea
@@ -222,9 +230,9 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                           placeholder="e.g., Focus on key themes and character development..."
                           value={customPrompt}
                           onChange={(e) => setCustomPrompt(e.target.value)}
-                          className="min-h-[80px]"
+                          className="min-h-[60px] sm:min-h-[80px] text-sm"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Add specific instructions for the AI summarization
                         </p>
                       </div>
@@ -235,14 +243,14 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
             </Card>
 
             {/* Summary Content */}
-            <div className="max-w-4xl mx-auto p-6">
+            <div className="max-w-4xl mx-auto p-3 sm:p-6">
               {summary ? (
-                <div className="prose prose-lg max-w-none">
+                <div className="prose prose-sm sm:prose-lg max-w-none">
                   <div 
-                    className="text-gray-800 leading-relaxed"
+                    className="text-gray-800 dark:text-gray-200 leading-relaxed"
                     style={{ 
                       fontFamily: 'Crimson Pro, Georgia, serif',
-                      fontSize: '18px',
+                      fontSize: window.innerWidth < 640 ? '16px' : '18px',
                       lineHeight: '1.7'
                     }}
                     dangerouslySetInnerHTML={{ __html: renderMarkdown(summary) }}
@@ -250,16 +258,16 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                   
                   {/* Summary Statistics */}
                   {summaryStats && (
-                    <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-200">
-                      <h4 className="font-semibold text-amber-800 mb-2">Summary Statistics</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-amber-700">
+                    <div className="mt-8 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-2 text-sm">Summary Statistics</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm text-amber-700 dark:text-amber-300">
                         <div>
                           <span className="font-medium">Original:</span> {summaryStats.originalTokens} tokens
                         </div>
                         <div>
                           <span className="font-medium">Summary:</span> {summaryStats.summaryTokens} tokens
                         </div>
-                        <div>
+                        <div className="sm:col-span-2 lg:col-span-1">
                           <span className="font-medium">Compression:</span> {Math.round(summaryStats.actualRatio * 100)}%
                         </div>
                       </div>
@@ -268,11 +276,11 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <Sparkles className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                     No Summary Generated
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm px-4">
                     Adjust the settings above and click "Generate Summary" to create an AI-powered summary of this chapter
                   </p>
                 </div>

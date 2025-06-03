@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Chapter } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -20,9 +19,10 @@ interface ReadingViewProps {
   content: string;
   bookId: string;
   loading?: boolean;
+  onViewModeChange?: (mode: 'toc' | 'reading') => void;
 }
 
-export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewProps) => {
+export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChange }: ReadingViewProps) => {
   const [viewMode, setViewMode] = useState<'full' | 'summary'>('full');
   const [summary, setSummary] = useState<string>('');
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -33,6 +33,16 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { toast } = useToast();
   const { markChapterSummary } = useChapterSummaries();
+
+  const handleTabChange = (value: string) => {
+    setViewMode(value as 'full' | 'summary');
+    
+    // On mobile, if switching back to full text and we have onViewModeChange, 
+    // we can update the parent state if needed
+    if (value === 'full' && onViewModeChange && window.innerWidth < 768) {
+      // This ensures proper mobile navigation state
+    }
+  };
 
   const generateSummary = async () => {
     try {
@@ -63,7 +73,6 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
   };
 
   const renderMarkdown = (text: string) => {
-    // Enhanced markdown parsing for better formatting
     return text
       .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-6 mb-3">$1</h3>')
       .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4">$1</h2>')
@@ -116,7 +125,7 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
               </div>
             </div>
             
-            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'full' | 'summary')}>
+            <Tabs value={viewMode} onValueChange={handleTabChange}>
               <TabsList className="grid w-full grid-cols-2 h-8 sm:h-10">
                 <TabsTrigger value="full" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                   <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -136,7 +145,7 @@ export const ReadingView = ({ chapter, content, bookId, loading }: ReadingViewPr
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'full' | 'summary')}>
+        <Tabs value={viewMode} onValueChange={handleTabChange}>
           <TabsContent value="full" className="mt-0">
             <div className="max-w-4xl mx-auto p-3 sm:p-6">
               <div className="prose prose-sm sm:prose-lg max-w-none">

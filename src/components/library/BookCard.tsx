@@ -14,22 +14,22 @@ export const BookCard = ({ book, onDelete, onRead }: BookCardProps) => {
   const uploadDate = new Date(book.uploadDate).toLocaleDateString();
 
   return (
-    <Card className="group bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+    <Card className="group bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate text-lg">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-lg">
               {book.title}
             </h3>
             {book.author && (
-              <p className="text-sm text-gray-600 mt-1">by {book.author}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">by {book.author}</p>
             )}
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={onDelete}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -38,19 +38,19 @@ export const BookCard = ({ book, onDelete, onRead }: BookCardProps) => {
       
       <CardContent className="pt-0">
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <FileText className="w-4 h-4" />
             <span>{book.chapterCount} chapters</span>
           </div>
           
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <Calendar className="w-4 h-4" />
             <span>Added {uploadDate}</span>
           </div>
           
           {book.metadata?.language && (
             <div className="inline-block">
-              <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+              <span className="text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 px-2 py-1 rounded-full">
                 {book.metadata.language}
               </span>
             </div>

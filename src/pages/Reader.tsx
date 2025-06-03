@@ -17,14 +17,16 @@ const Reader = () => {
   const { book, currentChapter, chapterContent, loading, loadingChapter, loadChapter } = useBookReader(bookId || null);
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileTOC, setShowMobileTOC] = useState(false);
+  const [viewMode, setViewMode] = useState<'toc' | 'reading'>('toc');
 
   useEffect(() => {
     const checkIsMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Show TOC by default on mobile when no chapter is selected
+      
+      // On mobile, show TOC by default when no chapter is selected
       if (mobile && !currentChapter) {
-        setShowMobileTOC(true);
+        setViewMode('toc');
       }
     };
 
@@ -33,13 +35,29 @@ const Reader = () => {
     return () => window.removeEventListener('resize', checkIsMobile);
   }, [currentChapter]);
 
+  // Update view mode when chapter changes
+  useEffect(() => {
+    if (currentChapter && isMobile) {
+      setViewMode('reading');
+    }
+  }, [currentChapter, isMobile]);
+
   const handleChapterSelect = (chapterId: string) => {
     if (bookId) {
       loadChapter(bookId, chapterId);
       // Hide mobile TOC when chapter is selected
       if (isMobile) {
         setShowMobileTOC(false);
+        setViewMode('reading');
       }
+    }
+  };
+
+  const handleBackNavigation = () => {
+    if (isMobile && viewMode === 'reading') {
+      setViewMode('toc');
+    } else {
+      navigate('/');
     }
   };
 
@@ -78,11 +96,13 @@ const Reader = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={handleBackNavigation}
                 className="hover:bg-amber-100 dark:hover:bg-gray-800 p-1 sm:p-2"
               >
                 <ArrowLeft className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Library</span>
+                <span className="hidden sm:inline">
+                  {isMobile && viewMode === 'reading' ? 'Contents' : 'Library'}
+                </span>
               </Button>
               <div className="hidden md:block">
                 <Logo />
@@ -106,22 +126,24 @@ const Reader = () => {
                 )}
               </div>
               
-              {/* Mobile Menu */}
-              <Sheet open={showMobileTOC} onOpenChange={setShowMobileTOC}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="md:hidden p-1">
-                    <Menu className="w-4 h-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-80 p-0">
-                  <TableOfContents
-                    chapters={book.chapters}
-                    currentChapterId={currentChapter?.id}
-                    onChapterSelect={handleChapterSelect}
-                    loading={loadingChapter}
-                  />
-                </SheetContent>
-              </Sheet>
+              {/* Mobile Menu - only show when in reading mode */}
+              {isMobile && viewMode === 'reading' && (
+                <Sheet open={showMobileTOC} onOpenChange={setShowMobileTOC}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm" className="p-1">
+                      <Menu className="w-4 h-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-80 p-0">
+                    <TableOfContents
+                      chapters={book.chapters}
+                      currentChapterId={currentChapter?.id}
+                      onChapterSelect={handleChapterSelect}
+                      loading={loadingChapter}
+                    />
+                  </SheetContent>
+                </Sheet>
+              )}
             </div>
           </div>
         </div>
@@ -140,33 +162,65 @@ const Reader = () => {
 
         {/* Main Content */}
         <main className="flex-1 bg-white/50 dark:bg-gray-800/50">
-          {currentChapter ? (
-            <ReadingView
-              chapter={currentChapter}
-              content={chapterContent}
-              bookId={bookId!}
-              loading={loadingChapter}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center p-4">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Select a Chapter
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Choose a chapter from the table of contents to start reading
-                </p>
-                {isMobile && (
+          {/* Mobile: Show TOC or Reading View based on state */}
+          {isMobile ? (
+            viewMode === 'toc' ? (
+              <div className="h-full">
+                <TableOfContents
+                  chapters={book.chapters}
+                  currentChapterId={currentChapter?.id}
+                  onChapterSelect={handleChapterSelect}
+                  loading={loadingChapter}
+                />
+              </div>
+            ) : currentChapter ? (
+              <ReadingView
+                chapter={currentChapter}
+                content={chapterContent}
+                bookId={bookId!}
+                loading={loadingChapter}
+                onViewModeChange={setViewMode}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center p-4">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Select a Chapter
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Choose a chapter from the table of contents to start reading
+                  </p>
                   <Button 
-                    onClick={() => setShowMobileTOC(true)}
+                    onClick={() => setViewMode('toc')}
                     className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                   >
                     <Menu className="w-4 h-4 mr-2" />
                     Show Table of Contents
                   </Button>
-                )}
+                </div>
               </div>
-            </div>
+            )
+          ) : (
+            /* Desktop: Always show reading view or placeholder */
+            currentChapter ? (
+              <ReadingView
+                chapter={currentChapter}
+                content={chapterContent}
+                bookId={bookId!}
+                loading={loadingChapter}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center p-4">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Select a Chapter
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Choose a chapter from the table of contents to start reading
+                  </p>
+                </div>
+              </div>
+            )
           )}
         </main>
       </div>

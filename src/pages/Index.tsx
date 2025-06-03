@@ -16,41 +16,44 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
       <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <Logo />
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={toggleTheme}
-                className="hover:bg-amber-100 dark:hover:bg-gray-800"
+                className="hover:bg-amber-100 dark:hover:bg-gray-800 p-1.5 sm:p-2"
               >
                 {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
               
               <Button
                 variant="outline"
+                size="sm"
                 onClick={loadBooks}
                 disabled={loading}
-                className="hover:bg-amber-100 dark:hover:bg-gray-800"
+                className="hover:bg-amber-100 dark:hover:bg-gray-800 p-1.5 sm:p-2"
               >
                 {loading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <RefreshCw className="w-4 h-4" />
                 )}
-                Refresh
+                <span className="hidden sm:inline ml-2">Refresh</span>
               </Button>
               
               <Button
                 asChild
                 variant="ghost"
-                className="hover:bg-amber-100 dark:hover:bg-gray-800"
+                size="sm"
+                className="hover:bg-amber-100 dark:hover:bg-gray-800 p-1.5 sm:p-2"
               >
                 <Link to="/settings">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden sm:inline ml-2">Settings</span>
                 </Link>
               </Button>
             </div>
@@ -58,19 +61,19 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-3 sm:px-6 py-6 sm:py-8">
         {/* Welcome Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-100 dark:to-gray-400 bg-clip-text text-transparent mb-3 sm:mb-4">
             Your AI-Powered Library
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-4">
             Upload EPUB books and experience intelligent reading with AI-generated summaries and insights
           </p>
         </div>
 
         {/* Upload Zone */}
-        <div className="mb-12">
+        <div className="mb-8 sm:mb-12">
           <UploadZone onUpload={uploadBook} uploading={uploading} />
         </div>
 
@@ -90,17 +93,17 @@ const Index = () => {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No Books Yet</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">Upload your first EPUB file to get started with AI-powered reading</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm px-4">Upload your first EPUB file to get started with AI-powered reading</p>
           </div>
         ) : (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                 Your Books ({books.length})
               </h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {books.map((book) => (
                 <BookCard
                   key={book.id}

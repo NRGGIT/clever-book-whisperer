@@ -44,7 +44,7 @@ export const TableOfContents = ({
                 {chapter.title}
               </span>
               {hasChapterSummary(chapter.id) && (
-                <Sparkles className="w-3 h-3 text-amber-500 dark:text-amber-400 flex-shrink-0" title="AI Summary Available" />
+                <Sparkles className="w-3 h-3 text-amber-500 dark:text-amber-400 flex-shrink-0" />
               )}
             </div>
             <span className="text-xs text-gray-500 dark:text-gray-400">

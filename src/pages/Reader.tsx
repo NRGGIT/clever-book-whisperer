@@ -1,5 +1,6 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useBookReader } from '@/hooks/useBooks';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Logo } from '@/components/ui/logo';
@@ -14,10 +15,31 @@ const Reader = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { book, currentChapter, chapterContent, loading, loadingChapter, loadChapter } = useBookReader(bookId || null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileTOC, setShowMobileTOC] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // Show TOC by default on mobile when no chapter is selected
+      if (mobile && !currentChapter) {
+        setShowMobileTOC(true);
+      }
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, [currentChapter]);
 
   const handleChapterSelect = (chapterId: string) => {
     if (bookId) {
       loadChapter(bookId, chapterId);
+      // Hide mobile TOC when chapter is selected
+      if (isMobile) {
+        setShowMobileTOC(false);
+      }
     }
   };
 
@@ -85,7 +107,7 @@ const Reader = () => {
               </div>
               
               {/* Mobile Menu */}
-              <Sheet>
+              <Sheet open={showMobileTOC} onOpenChange={setShowMobileTOC}>
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="md:hidden p-1">
                     <Menu className="w-4 h-4" />
@@ -131,9 +153,18 @@ const Reader = () => {
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Select a Chapter
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Choose a chapter from the table of contents to start reading
                 </p>
+                {isMobile && (
+                  <Button 
+                    onClick={() => setShowMobileTOC(true)}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                  >
+                    <Menu className="w-4 h-4 mr-2" />
+                    Show Table of Contents
+                  </Button>
+                )}
               </div>
             </div>
           )}

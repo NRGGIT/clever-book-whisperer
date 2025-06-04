@@ -35,10 +35,10 @@ const Settings = () => {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const [config, setConfig] = useState<ConfigResponse>({
-    apiEndpoint: 'https://api.openai.com/v1',
+    apiEndpoint: '',
     apiKey: '',
-    modelName: 'gpt-4o-mini',
-    prompt: 'You are a helpful assistant that creates concise, accurate summaries of text content. Maintain the key information and main ideas while reducing the length according to the specified ratio. Keep the summary coherent and well-structured.',
+    modelName: '',
+    prompt: '',
     defaultRatio: 0.3,
   });
   const [availableModels, setAvailableModels] = useState<OpenAIModel[]>([]);
@@ -54,6 +54,7 @@ const Settings = () => {
     try {
       setLoading(true);
       const configData = await ApiService.getConfig();
+      console.log('Loaded config:', configData);
       setConfig(configData);
     } catch (error) {
       console.error('Failed to load config:', error);
@@ -71,6 +72,7 @@ const Settings = () => {
     try {
       setLoadingModels(true);
       const models = await ApiService.getAvailableModels();
+      console.log('Loaded models:', models);
       setAvailableModels(models);
       toast({
         title: "Models Loaded",
@@ -91,11 +93,14 @@ const Settings = () => {
   const saveConfig = async () => {
     try {
       setSaving(true);
+      console.log('Saving config:', config);
       await ApiService.updateConfig(config);
       toast({
         title: "Settings Saved",
         description: "Configuration has been updated successfully",
       });
+      // Reload config to ensure we have the latest data
+      await loadConfig();
     } catch (error) {
       console.error('Failed to save config:', error);
       toast({
@@ -214,34 +219,38 @@ const Settings = () => {
                   <RefreshCw className={`w-3 h-3 ${loadingModels ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
-              <Select 
-                value={config.modelName} 
-                onValueChange={(value) => setConfig(prev => ({ ...prev, modelName: value }))}
-              >
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.length > 0 ? (
-                    availableModels.map((model) => (
+              
+              {availableModels.length > 0 ? (
+                <Select 
+                  value={config.modelName || ''} 
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, modelName: value }))}
+                >
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Select a model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map((model) => (
                       <SelectItem key={model.id} value={model.id} className="text-sm">
-                        {model.metadata.name}
+                        {model.metadata.name} ({model.id})
                       </SelectItem>
-                    ))
-                  ) : (
-                    <>
-                      <SelectItem value="gpt-4o-mini">GPT-4O Mini (Fast & Economical)</SelectItem>
-                      <SelectItem value="gpt-4o">GPT-4O (Powerful)</SelectItem>
-                      <SelectItem value="gpt-4">GPT-4 (Legacy)</SelectItem>
-                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (Economic)</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="modelName"
+                  type="text"
+                  placeholder="Enter model name (e.g., gpt-4o-mini)"
+                  value={config.modelName || ''}
+                  onChange={(e) => setConfig(prev => ({ ...prev, modelName: e.target.value }))}
+                  className="text-sm"
+                />
+              )}
+              
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {availableModels.length > 0 
                   ? `${availableModels.length} models loaded from API` 
-                  : 'Click refresh to load available models (requires valid API key)'
+                  : 'Enter model name manually or click refresh to load available models (requires valid API key)'
                 }
               </p>
             </div>
@@ -255,8 +264,8 @@ const Settings = () => {
                 min="0.1"
                 max="0.8"
                 step="0.1"
-                value={config.defaultRatio}
-                onChange={(e) => setConfig(prev => ({ ...prev, defaultRatio: parseFloat(e.target.value) }))}
+                value={config.defaultRatio || 0.3}
+                onChange={(e) => setConfig(prev => ({ ...prev, defaultRatio: parseFloat(e.target.value) || 0.3 }))}
                 className="text-sm"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">

@@ -120,6 +120,7 @@ export class ApiService {
   }
   
   static async updateConfig(config: any): Promise<any> {
+    console.log('Updating config with data:', config);
     const response = await fetch(`${API_BASE_URL}/config`, {
       method: 'PUT',
       headers: {
@@ -129,6 +130,8 @@ export class ApiService {
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Config update failed:', response.status, errorText);
       throw new Error(`Failed to update config: ${response.statusText}`);
     }
     

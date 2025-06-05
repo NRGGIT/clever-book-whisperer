@@ -60,9 +60,15 @@ export interface BookListItem {
 }
 
 export interface AppConfig {
-  openaiApiKey?: string;
-  model: string;
-  temperature: number;
-  maxTokens: number;
   apiEndpoint?: string;
+  apiKey?: string;
+  modelName: string;
+  prompt: string;
+  defaultRatio: number;
+}
+
+export interface ModelInfo {
+  name: string;
+  alias: string;
+  hostedBy: string;
 }

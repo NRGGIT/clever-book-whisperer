@@ -1,3 +1,4 @@
+
 const getApiBaseUrl = (): string => {
   // First try Vite environment variable (build time)
   if ((import.meta as any).env?.VITE_API_BASE_URL) {
@@ -10,30 +11,15 @@ const getApiBaseUrl = (): string => {
   }
   
   // Fallback to default
-  return 'http://localhost:3000/api';
+  return 'http://localhost:3001/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
-interface OpenAIModel {
-  id: string;
-  object: string;
-  created: number;
-  owned_by: string;
-  permission: any[];
-  root: string;
-  parent: string | null;
-  metadata: {
-    name: string;
-    description: string;
-    original_id: string;
-    code: string;
-  };
-}
-
-interface OpenAIModelsResponse {
-  object: string;
-  data: OpenAIModel[];
+interface ModelInfo {
+  name: string;
+  alias: string;
+  hostedBy: string;
 }
 
 export class ApiService {
@@ -74,7 +60,7 @@ export class ApiService {
   }
   
   static async getBookStructure(bookId: string): Promise<any> {
-    // Use the new nested structure endpoint
+    // Use the nested structure endpoint
     const response = await fetch(`${API_BASE_URL}/books/${bookId}/structure-nested`);
     
     if (!response.ok) {
@@ -149,31 +135,20 @@ export class ApiService {
     return response.json();
   }
   
-  static async getAvailableModels(): Promise<OpenAIModel[]> {
+  static async getAvailableModels(): Promise<ModelInfo[]> {
     try {
-      const config = await this.getConfig();
-      const response = await fetch(`${config.apiEndpoint}/v1/models`, {
-        headers: {
-          'Authorization': `Bearer ${config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(`${API_BASE_URL}/models`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
       
-      const data: OpenAIModelsResponse = await response.json();
+      const models: ModelInfo[] = await response.json();
       
-      // Sort by code and original_id as requested
-      return data.data.sort((a, b) => {
-        if (a.metadata.code !== b.metadata.code) {
-          return a.metadata.code.localeCompare(b.metadata.code);
-        }
-        return a.metadata.original_id.localeCompare(b.metadata.original_id);
-      });
+      // Sort by name for consistent display
+      return models.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
-      console.error('Failed to fetch OpenAI models:', error);
+      console.error('Failed to fetch available models:', error);
       throw error;
     }
   }

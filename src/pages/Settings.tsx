@@ -20,14 +20,10 @@ interface ConfigResponse {
   defaultRatio: number;
 }
 
-interface OpenAIModel {
-  id: string;
-  metadata: {
-    name: string;
-    description: string;
-    original_id: string;
-    code: string;
-  };
+interface ModelInfo {
+  name: string;
+  alias: string;
+  hostedBy: string;
 }
 
 const Settings = () => {
@@ -41,7 +37,7 @@ const Settings = () => {
     prompt: '',
     defaultRatio: 0.3,
   });
-  const [availableModels, setAvailableModels] = useState<OpenAIModel[]>([]);
+  const [availableModels, setAvailableModels] = useState<ModelInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -168,18 +164,18 @@ const Settings = () => {
               AI Configuration
             </CardTitle>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Configure OpenAI settings for summarization
+              Configure AI settings for summarization
             </p>
           </CardHeader>
           
           <CardContent className="space-y-4 sm:space-y-6">
-            {/* OpenAI API Key */}
+            {/* API Key */}
             <div className="space-y-2">
-              <Label htmlFor="apiKey" className="text-sm">OpenAI API Key</Label>
+              <Label htmlFor="apiKey" className="text-sm">API Key</Label>
               <Input
                 id="apiKey"
                 type="password"
-                placeholder="sk-..."
+                placeholder="Your API key"
                 value={config.apiKey || ''}
                 onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
                 className="text-sm"
@@ -195,13 +191,13 @@ const Settings = () => {
               <Input
                 id="apiEndpoint"
                 type="text"
-                placeholder="https://api.openai.com/v1"
+                placeholder="https://api.example.com"
                 value={config.apiEndpoint || ''}
                 onChange={(e) => setConfig(prev => ({ ...prev, apiEndpoint: e.target.value }))}
                 className="text-sm"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                OpenAI API endpoint URL
+                AI API endpoint URL
               </p>
             </div>
 
@@ -213,7 +209,7 @@ const Settings = () => {
                   variant="ghost"
                   size="sm"
                   onClick={loadAvailableModels}
-                  disabled={loadingModels || !config.apiKey}
+                  disabled={loadingModels}
                   className="p-1"
                 >
                   <RefreshCw className={`w-3 h-3 ${loadingModels ? 'animate-spin' : ''}`} />
@@ -230,8 +226,13 @@ const Settings = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {availableModels.map((model) => (
-                      <SelectItem key={model.id} value={model.id} className="text-sm">
-                        {model.metadata.name} ({model.id})
+                      <SelectItem key={model.name} value={model.name} className="text-sm">
+                        <div className="flex flex-col">
+                          <span>{model.name}</span>
+                          <span className="text-xs text-gray-500">
+                            {model.alias} - {model.hostedBy}
+                          </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -240,7 +241,7 @@ const Settings = () => {
                 <Input
                   id="modelName"
                   type="text"
-                  placeholder="Enter model name (e.g., gpt-4o-mini)"
+                  placeholder="Enter model name (e.g., gpt-4.1-nano)"
                   value={config.modelName || ''}
                   onChange={(e) => setConfig(prev => ({ ...prev, modelName: e.target.value }))}
                   className="text-sm"
@@ -250,7 +251,7 @@ const Settings = () => {
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {availableModels.length > 0 
                   ? `${availableModels.length} models loaded from API` 
-                  : 'Enter model name manually or click refresh to load available models (requires valid API key)'
+                  : 'Enter model name manually or click refresh to load available models'
                 }
               </p>
             </div>

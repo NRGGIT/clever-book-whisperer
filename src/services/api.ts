@@ -118,12 +118,25 @@ export class ApiService {
   
   static async updateConfig(config: any): Promise<any> {
     console.log('Updating config with data:', config);
+    
+    // Only send the fields that the backend expects
+    const backendConfig = {
+      baseUrl: config.baseUrl,
+      knowledgeModelId: config.knowledgeModelId,
+      apiKey: config.apiKey,
+      modelName: config.modelName, // This should be the alias
+      prompt: config.prompt,
+      defaultRatio: config.defaultRatio
+    };
+    
+    console.log('Sending to backend:', backendConfig);
+    
     const response = await fetch(`${API_BASE_URL}/config`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(config),
+      body: JSON.stringify(backendConfig),
     });
     
     if (!response.ok) {

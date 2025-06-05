@@ -13,7 +13,8 @@ import { ArrowLeft, Save, Settings as SettingsIcon, Loader2, Moon, Sun, RefreshC
 import { useToast } from '@/hooks/use-toast';
 
 interface ConfigResponse {
-  apiEndpoint: string;
+  baseUrl: string;
+  knowledgeModelId: string;
   apiKey: string;
   modelName: string;
   prompt: string;
@@ -30,13 +31,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
-  const [config, setConfig] = useState<ConfigResponse>({
-    apiEndpoint: '',
-    apiKey: '',
-    modelName: '',
-    prompt: '',
-    defaultRatio: 0.3,
-  });
+  const [config, setConfig] = useState<ConfigResponse | null>(null);
   const [availableModels, setAvailableModels] = useState<ModelInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -87,6 +82,8 @@ const Settings = () => {
   };
 
   const saveConfig = async () => {
+    if (!config) return;
+    
     try {
       setSaving(true);
       console.log('Saving config:', config);
@@ -109,12 +106,25 @@ const Settings = () => {
     }
   };
 
+  // Find the selected model info for display
+  const selectedModel = availableModels.find(model => model.alias === config?.modelName);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 text-amber-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!config) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Failed to load configuration</p>
         </div>
       </div>
     );
@@ -169,6 +179,38 @@ const Settings = () => {
           </CardHeader>
           
           <CardContent className="space-y-4 sm:space-y-6">
+            {/* Base URL */}
+            <div className="space-y-2">
+              <Label htmlFor="baseUrl" className="text-sm">Base URL</Label>
+              <Input
+                id="baseUrl"
+                type="text"
+                placeholder="https://api.example.com"
+                value={config.baseUrl || ''}
+                onChange={(e) => setConfig(prev => prev ? { ...prev, baseUrl: e.target.value } : null)}
+                className="text-sm"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                AI API base URL
+              </p>
+            </div>
+
+            {/* Knowledge Model ID */}
+            <div className="space-y-2">
+              <Label htmlFor="knowledgeModelId" className="text-sm">Knowledge Model ID</Label>
+              <Input
+                id="knowledgeModelId"
+                type="text"
+                placeholder="Knowledge model identifier"
+                value={config.knowledgeModelId || ''}
+                onChange={(e) => setConfig(prev => prev ? { ...prev, knowledgeModelId: e.target.value } : null)}
+                className="text-sm"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Unique identifier for the knowledge model
+              </p>
+            </div>
+
             {/* API Key */}
             <div className="space-y-2">
               <Label htmlFor="apiKey" className="text-sm">API Key</Label>
@@ -177,27 +219,11 @@ const Settings = () => {
                 type="password"
                 placeholder="Your API key"
                 value={config.apiKey || ''}
-                onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                onChange={(e) => setConfig(prev => prev ? { ...prev, apiKey: e.target.value } : null)}
                 className="text-sm"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Your API key is stored securely and used only for summarization requests
-              </p>
-            </div>
-
-            {/* API Endpoint */}
-            <div className="space-y-2">
-              <Label htmlFor="apiEndpoint" className="text-sm">API Endpoint</Label>
-              <Input
-                id="apiEndpoint"
-                type="text"
-                placeholder="https://api.example.com"
-                value={config.apiEndpoint || ''}
-                onChange={(e) => setConfig(prev => ({ ...prev, apiEndpoint: e.target.value }))}
-                className="text-sm"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                AI API endpoint URL
               </p>
             </div>
 
@@ -219,14 +245,16 @@ const Settings = () => {
               {availableModels.length > 0 ? (
                 <Select 
                   value={config.modelName || ''} 
-                  onValueChange={(value) => setConfig(prev => ({ ...prev, modelName: value }))}
+                  onValueChange={(value) => setConfig(prev => prev ? { ...prev, modelName: value } : null)}
                 >
                   <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Select a model" />
+                    <SelectValue placeholder="Select a model">
+                      {selectedModel ? selectedModel.name : config.modelName}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {availableModels.map((model) => (
-                      <SelectItem key={model.name} value={model.name} className="text-sm">
+                      <SelectItem key={model.alias} value={model.alias} className="text-sm">
                         <div className="flex flex-col">
                           <span>{model.name}</span>
                           <span className="text-xs text-gray-500">
@@ -241,9 +269,9 @@ const Settings = () => {
                 <Input
                   id="modelName"
                   type="text"
-                  placeholder="Enter model name (e.g., gpt-4.1-nano)"
+                  placeholder="Enter model alias (e.g., gpt-4.1-nano)"
                   value={config.modelName || ''}
-                  onChange={(e) => setConfig(prev => ({ ...prev, modelName: e.target.value }))}
+                  onChange={(e) => setConfig(prev => prev ? { ...prev, modelName: e.target.value } : null)}
                   className="text-sm"
                 />
               )}
@@ -251,7 +279,7 @@ const Settings = () => {
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {availableModels.length > 0 
                   ? `${availableModels.length} models loaded from API` 
-                  : 'Enter model name manually or click refresh to load available models'
+                  : 'Enter model alias manually or click refresh to load available models'
                 }
               </p>
             </div>
@@ -266,7 +294,7 @@ const Settings = () => {
                 max="0.8"
                 step="0.1"
                 value={config.defaultRatio || 0.3}
-                onChange={(e) => setConfig(prev => ({ ...prev, defaultRatio: parseFloat(e.target.value) || 0.3 }))}
+                onChange={(e) => setConfig(prev => prev ? { ...prev, defaultRatio: parseFloat(e.target.value) || 0.3 } : null)}
                 className="text-sm"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -282,7 +310,7 @@ const Settings = () => {
                 className="flex min-h-[80px] sm:min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="Enter the system prompt for AI summarization..."
                 value={config.prompt || ''}
-                onChange={(e) => setConfig(prev => ({ ...prev, prompt: e.target.value }))}
+                onChange={(e) => setConfig(prev => prev ? { ...prev, prompt: e.target.value } : null)}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 Instructions for the AI on how to generate summaries

@@ -60,9 +60,10 @@ export interface BookListItem {
 }
 
 export interface AppConfig {
-  apiEndpoint?: string;
-  apiKey?: string;
-  modelName: string;
+  baseUrl: string;
+  knowledgeModelId: string;
+  apiKey: string;
+  modelName: string; // This should be the alias from the models endpoint
   prompt: string;
   defaultRatio: number;
 }

@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useBookReader } from '@/hooks/useBooks';
@@ -14,7 +13,7 @@ const Reader = () => {
   const { bookId } = useParams<{ bookId: string }>();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { book, currentChapter, chapterContent, loading, loadingChapter, loadChapter } = useBookReader(bookId || null);
+  const { book, currentChapter, chapterContent, loading, loadingChapter, loadChapter, isFullContent } = useBookReader(bookId || null);
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileTOC, setShowMobileTOC] = useState(false);
   const [viewMode, setViewMode] = useState<'toc' | 'reading'>('toc');
@@ -42,9 +41,9 @@ const Reader = () => {
     }
   }, [currentChapter, isMobile]);
 
-  const handleChapterSelect = (chapterId: string) => {
+  const handleChapterSelect = (chapterId: string, loadFull?: boolean) => {
     if (bookId) {
-      loadChapter(bookId, chapterId);
+      loadChapter(bookId, chapterId, loadFull);
       // Hide mobile TOC when chapter is selected
       if (isMobile) {
         setShowMobileTOC(false);
@@ -124,6 +123,9 @@ const Reader = () => {
                 {book.author && (
                   <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{book.author}</p>
                 )}
+                {isFullContent && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">Full Chapter Mode</p>
+                )}
               </div>
               
               {/* Mobile Menu - only show when in reading mode */}
@@ -180,6 +182,7 @@ const Reader = () => {
                 bookId={bookId!}
                 loading={loadingChapter}
                 onViewModeChange={setViewMode}
+                isFullContent={isFullContent}
               />
             ) : (
               <div className="flex items-center justify-center h-full">
@@ -208,6 +211,7 @@ const Reader = () => {
                 content={chapterContent}
                 bookId={bookId!}
                 loading={loadingChapter}
+                isFullContent={isFullContent}
               />
             ) : (
               <div className="flex items-center justify-center h-full">

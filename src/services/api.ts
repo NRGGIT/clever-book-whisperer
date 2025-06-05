@@ -74,7 +74,8 @@ export class ApiService {
   }
   
   static async getBookStructure(bookId: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/books/${bookId}/structure`);
+    // Use the new nested structure endpoint
+    const response = await fetch(`${API_BASE_URL}/books/${bookId}/structure-nested`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch book structure: ${response.statusText}`);
@@ -88,6 +89,16 @@ export class ApiService {
     
     if (!response.ok) {
       throw new Error(`Failed to fetch chapter content: ${response.statusText}`);
+    }
+    
+    return response.json();
+  }
+
+  static async getFullChapterContent(bookId: string, chapterId: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/books/${bookId}/full-content/${chapterId}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch full chapter content: ${response.statusText}`);
     }
     
     return response.json();

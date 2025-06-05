@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Sparkles, BookOpen, Loader2, BarChart3, ChevronDown, Settings } from 'lucide-react';
+import { Sparkles, BookOpen, Loader2, BarChart3, ChevronDown, Settings, Book } from 'lucide-react';
 import { Mermaid } from '@/components/ui/mermaid';
 import { ApiService } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
@@ -21,9 +21,10 @@ interface ReadingViewProps {
   bookId: string;
   loading?: boolean;
   onViewModeChange?: (mode: 'toc' | 'reading') => void;
+  isFullContent?: boolean;
 }
 
-export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChange }: ReadingViewProps) => {
+export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChange, isFullContent = false }: ReadingViewProps) => {
   const [viewMode, setViewMode] = useState<'full' | 'summary'>('full');
   const [summary, setSummary] = useState<string>('');
   const [summaryLoading, setSummaryLoading] = useState(false);
@@ -141,6 +142,12 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
                 <Badge variant="outline" className="text-xs">
                   Chapter {chapter.order}
                 </Badge>
+                {isFullContent && (
+                  <Badge variant="secondary" className="text-xs">
+                    <Book className="w-3 h-3 mr-1" />
+                    Full Content
+                  </Badge>
+                )}
                 {summaryStats && (
                   <>
                     <Badge variant="secondary" className="text-xs">
@@ -159,7 +166,9 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
               <TabsList className="grid w-full grid-cols-2 h-8 sm:h-10">
                 <TabsTrigger value="full" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                   <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Full Text</span>
+                  <span className="hidden sm:inline">
+                    {isFullContent ? 'Full Content' : 'Chapter Text'}
+                  </span>
                   <span className="sm:hidden">Text</span>
                 </TabsTrigger>
                 <TabsTrigger value="summary" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
@@ -178,6 +187,17 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
         <Tabs value={viewMode} onValueChange={handleTabChange}>
           <TabsContent value="full" className="mt-0">
             <div className="max-w-4xl mx-auto p-3 sm:p-6">
+              {isFullContent && (
+                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 text-sm flex items-center gap-2">
+                    <Book className="w-4 h-4" />
+                    Full Chapter Content
+                  </h4>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    This view includes the main chapter content along with all its subsections and subchapters.
+                  </p>
+                </div>
+              )}
               <div className="prose prose-sm sm:prose-lg max-w-none">
                 <div 
                   className="text-gray-800 dark:text-gray-200 leading-relaxed"
@@ -197,6 +217,18 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
             <Card className="m-3 sm:m-6 mb-0">
               <CardContent className="p-3 sm:p-4">
                 <div className="space-y-4">
+                  {isFullContent && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-1 text-sm flex items-center gap-2">
+                        <Book className="w-4 h-4" />
+                        Summarizing Full Chapter
+                      </h4>
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        You're about to summarize the complete chapter including all subsections. This may take longer to process.
+                      </p>
+                    </div>
+                  )}
+
                   {/* Basic Controls */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <div>
@@ -273,6 +305,7 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Add specific instructions for the AI summarization. You can request Mermaid diagrams for visual representation.
+                          {isFullContent && ' Note: Full chapter summaries work especially well with structural diagrams.'}
                         </p>
                       </div>
                     </CollapsibleContent>
@@ -321,7 +354,7 @@ export const ReadingView = ({ chapter, content, bookId, loading, onViewModeChang
                     No Summary Generated
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm px-4">
-                    Adjust the settings above and click "Generate Summary" to create an AI-powered summary of this chapter. You can request diagrams in your custom prompt!
+                    Adjust the settings above and click "Generate Summary" to create an AI-powered summary of this {isFullContent ? 'full chapter' : 'chapter'}. You can request diagrams in your custom prompt!
                   </p>
                 </div>
               )}

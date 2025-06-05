@@ -88,6 +88,7 @@ export const useBookReader = (bookId: string | null) => {
   const [chapterContent, setChapterContent] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [loadingChapter, setLoadingChapter] = useState(false);
+  const [isFullContent, setIsFullContent] = useState(false);
   const { toast } = useToast();
 
   const loadBook = async (id: string) => {
@@ -110,14 +111,31 @@ export const useBookReader = (bookId: string | null) => {
     }
   };
 
-  const loadChapter = async (bookId: string, chapterId: string) => {
+  const findChapterById = (chapters: Chapter[], chapterId: string): Chapter | null => {
+    for (const chapter of chapters) {
+      if (chapter.id === chapterId) {
+        return chapter;
+      }
+      if (chapter.children) {
+        const found = findChapterById(chapter.children, chapterId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const loadChapter = async (bookId: string, chapterId: string, loadFull: boolean = false) => {
     try {
       setLoadingChapter(true);
-      const chapterData = await ApiService.getChapterContent(bookId, chapterId);
-      const chapter = book?.chapters.find(c => c.id === chapterId);
+      const chapterData = loadFull 
+        ? await ApiService.getFullChapterContent(bookId, chapterId)
+        : await ApiService.getChapterContent(bookId, chapterId);
+      
+      const chapter = book?.chapters ? findChapterById(book.chapters, chapterId) : null;
       if (chapter) {
         setCurrentChapter(chapter);
         setChapterContent(chapterData.content);
+        setIsFullContent(loadFull);
       }
     } catch (error) {
       console.error('Failed to load chapter:', error);
@@ -144,5 +162,6 @@ export const useBookReader = (bookId: string | null) => {
     loading,
     loadingChapter,
     loadChapter,
+    isFullContent,
   };
 };

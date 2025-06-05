@@ -15,6 +15,8 @@ export interface Chapter {
   order: number;
   href: string;
   children: Chapter[];
+  level?: number; // Add level for hierarchical display
+  parentId?: string; // Add parent reference
 }
 
 export interface ImageAsset {
@@ -62,4 +64,5 @@ export interface AppConfig {
   model: string;
   temperature: number;
   maxTokens: number;
+  apiEndpoint?: string;
 }
